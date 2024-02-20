@@ -1,10 +1,41 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic import TemplateView 
 from django.views import View 
 from django.http import HttpResponseRedirect
- 
- # Create your views here. 
+from django import forms 
+from django.shortcuts import render, redirect 
+
+def positiveValidator(value):
+    if value <= 0:
+        raise forms.ValidationError("Este campo debe ser un número positivo.")
+
+class ProductForm(forms.Form): 
+    name = forms.CharField(required=True) 
+    price = forms.FloatField(required=True, validators=[positiveValidator]) 
+
+def product_created(request):
+    return render(request, 'products/product_created.html')
+
+class ProductCreateView(View): 
+    template_name = 'products/create.html' 
+    def get(self, request): 
+        form = ProductForm() 
+        viewData = {} 
+        viewData["title"] = "Create product" 
+        viewData["form"] = form 
+        return render(request, self.template_name, viewData) 
+
+    def post(self, request): 
+        form = ProductForm(request.POST) 
+        if form.is_valid(): 
+            return redirect('product_created')  
+
+        else: 
+            viewData = {} 
+            viewData["title"] = "Create product" 
+            viewData["form"] = form 
+            return render(request, self.template_name, viewData)
 
 class homePageView(TemplateView):
     template_name = 'home.html'
@@ -57,8 +88,6 @@ class ProductIndexView(View):
         viewData["products"] = Product.products 
 
         return render(request, self.template_name, viewData) 
-
- 
 
 class ProductShowView(View): 
     template_name = 'products/show.html' 
